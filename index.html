@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PowerGrid — Home Energy Monitor</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --bg:#050d1a;
+  --bg2:#081426;
+  --bg3:#0a1d35;
+  --cyan:#00c8ff;
+  --green:#00ffcc;
+  --orange:#ff6b35;
+  --text:#a8d4ff;
+  --text2:rgba(168,212,255,0.5);
+  --border:rgba(0,200,255,0.2);
+  --border2:rgba(0,200,255,0.08);
+}
+html,body{height:100%;font-family:'Rajdhani',sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden;}
+
+/* GRID BG */
+.grid-bg{position:fixed;inset:0;background-image:linear-gradient(var(--border2) 1px,transparent 1px),linear-gradient(90deg,var(--border2) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+.scanline{position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,255,200,0.012) 2px,rgba(0,255,200,0.012) 4px);pointer-events:none;z-index:50;}
+
+/* =================== LOGIN =================== */
+#login-screen{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;background:var(--bg);}
+.login-box{position:relative;background:rgba(8,20,38,0.95);border:1px solid var(--border);border-radius:16px;padding:48px 40px;width:100%;max-width:420px;margin:16px;}
+.login-box::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--cyan),var(--green),transparent);border-radius:16px 16px 0 0;}
+.login-corner{position:absolute;width:14px;height:14px;}
+.login-corner.tl{top:10px;left:10px;border-top:1px solid var(--cyan);border-left:1px solid var(--cyan);}
+.login-corner.tr{top:10px;right:10px;border-top:1px solid var(--cyan);border-right:1px solid var(--cyan);}
+.login-corner.bl{bottom:10px;left:10px;border-bottom:1px solid var(--cyan);border-left:1px solid var(--cyan);}
+.login-corner.br{bottom:10px;right:10px;border-bottom:1px solid var(--cyan);border-right:1px solid var(--cyan);}
+.login-logo{text-align:center;margin-bottom:36px;}
+.login-logo .icon{width:56px;height:56px;border:2px solid var(--cyan);border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;position:relative;}
+.login-logo .icon::after{content:'';width:22px;height:22px;border:2px solid var(--green);border-radius:50%;animation:logopulse 2s infinite;}
+@keyframes logopulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.4;transform:scale(0.8);}}
+.login-logo h1{font-family:'Orbitron',monospace;font-size:22px;font-weight:900;color:var(--cyan);letter-spacing:4px;}
+.login-logo p{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text2);letter-spacing:2px;margin-top:4px;}
+.login-label{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text2);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;display:block;}
+.login-input{width:100%;background:rgba(0,20,50,0.8);border:1px solid var(--border);border-radius:8px;padding:12px 16px;color:var(--cyan);font-family:'Share Tech Mono',monospace;font-size:14px;outline:none;margin-bottom:20px;transition:border-color 0.2s;}
+.login-input:focus{border-color:var(--cyan);}
+.login-input::placeholder{color:rgba(0,200,255,0.25);}
+.login-btn{width:100%;background:rgba(0,200,255,0.1);border:1px solid var(--cyan);border-radius:8px;padding:14px;color:var(--cyan);font-family:'Orbitron',monospace;font-size:13px;font-weight:700;letter-spacing:3px;cursor:pointer;transition:all 0.2s;margin-top:8px;}
+.login-btn:hover{background:rgba(0,200,255,0.2);box-shadow:0 0 20px rgba(0,200,255,0.2);}
+.login-status{font-family:'Share Tech Mono',monospace;font-size:10px;text-align:center;margin-top:16px;color:var(--text2);}
+.login-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);margin-right:6px;animation:blink 1.5s infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:0.2;}}
+
+/* =================== DASHBOARD =================== */
+#dashboard{display:none;min-height:100vh;position:relative;z-index:1;}
+
+/* TOPBAR */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--border);background:rgba(5,13,26,0.9);backdrop-filter:blur(10px);position:sticky;top:0;z-index:100;}
+.topbar-logo{display:flex;align-items:center;gap:10px;}
+.topbar-icon{width:32px;height:32px;border:1.5px solid var(--cyan);border-radius:7px;display:flex;align-items:center;justify-content:center;}
+.topbar-icon::after{content:'';width:13px;height:13px;border:1.5px solid var(--green);border-radius:50%;animation:logopulse 2s infinite;}
+.topbar-title{font-family:'Orbitron',monospace;font-size:16px;font-weight:900;color:var(--cyan);letter-spacing:3px;}
+.topbar-sub{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text2);letter-spacing:2px;}
+.topbar-right{display:flex;align-items:center;gap:16px;}
+.live-badge{display:flex;align-items:center;gap:6px;font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--green);}
+.clock-str{font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--text2);}
+.logout-btn{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text2);background:none;border:1px solid var(--border);border-radius:6px;padding:6px 10px;cursor:pointer;transition:all 0.2s;letter-spacing:1px;}
+.logout-btn:hover{color:var(--cyan);border-color:var(--cyan);}
+
+/* MAIN LAYOUT */
+.main-wrap{max-width:1100px;margin:0 auto;padding:20px 16px;}
+
+/* METRICS ROW */
+.metrics-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
+@media(max-width:700px){.metrics-row{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:360px){.metrics-row{grid-template-columns:1fr 1fr;}}
+.metric-card{background:rgba(8,20,38,0.9);border:1px solid var(--border);border-radius:10px;padding:16px;position:relative;overflow:hidden;}
+.metric-card::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);animation:shimmer 4s infinite;}
+@keyframes shimmer{0%{transform:translateX(-100%);}100%{transform:translateX(100%);}}
+.m-label{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text2);letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;}
+.m-val{font-family:'Orbitron',monospace;font-size:24px;font-weight:700;color:var(--cyan);line-height:1;}
+.m-unit{font-size:11px;opacity:0.5;margin-left:2px;}
+.m-sub{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--green);margin-top:5px;}
+
+/* CONTENT GRID */
+.content-grid{display:grid;grid-template-columns:1fr 300px;gap:16px;}
+@media(max-width:800px){.content-grid{grid-template-columns:1fr;}}
+
+/* MAP */
+.map-panel{background:rgba(8,20,38,0.9);border:1px solid var(--border);border-radius:12px;padding:20px;position:relative;}
+.panel-title{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text2);letter-spacing:3px;margin-bottom:16px;}
+.c-tl,.c-tr,.c-bl,.c-br{position:absolute;width:12px;height:12px;}
+.c-tl{top:8px;left:8px;border-top:1px solid rgba(0,200,255,0.4);border-left:1px solid rgba(0,200,255,0.4);}
+.c-tr{top:8px;right:8px;border-top:1px solid rgba(0,200,255,0.4);border-right:1px solid rgba(0,200,255,0.4);}
+.c-bl{bottom:8px;left:8px;border-bottom:1px solid rgba(0,200,255,0.4);border-left:1px solid rgba(0,200,255,0.4);}
+.c-br{bottom:8px;right:8px;border-bottom:1px solid rgba(0,200,255,0.4);border-right:1px solid rgba(0,200,255,0.4);}
+#house-svg{width:100%;display:block;}
+.node{cursor:pointer;}
+.node:hover .nring{r:20;}
+.nring{transition:r 0.2s;}
+
+/* SIDEBAR */
+.sidebar{display:flex;flex-direction:column;gap:10px;}
+.plug-card{background:rgba(8,20,38,0.9);border:1px solid var(--border);border-radius:10px;padding:14px 16px;cursor:pointer;transition:all 0.2s;}
+.plug-card:hover,.plug-card.sel{border-color:var(--cyan);background:rgba(0,40,80,0.5);}
+.pc-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.pc-name{font-size:14px;font-weight:600;color:#c8e8ff;letter-spacing:1px;}
+.pc-room{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text2);letter-spacing:1px;margin-top:2px;}
+.toggle{width:34px;height:19px;background:rgba(0,200,255,0.1);border:1px solid var(--border);border-radius:10px;position:relative;cursor:pointer;transition:all 0.3s;flex-shrink:0;}
+.toggle.on{background:rgba(0,255,200,0.15);border-color:var(--green);}
+.toggle::after{content:'';position:absolute;top:2px;left:2px;width:13px;height:13px;border-radius:50%;background:rgba(0,200,255,0.4);transition:all 0.3s;}
+.toggle.on::after{left:17px;background:var(--green);box-shadow:0 0 6px var(--green);}
+.pc-watts{font-family:'Orbitron',monospace;font-size:20px;font-weight:700;color:var(--cyan);}
+.pc-watts.hi{color:var(--orange);}
+.pc-bar-wrap{height:3px;background:rgba(0,200,255,0.08);border-radius:2px;margin-top:8px;overflow:hidden;}
+.pc-bar{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--cyan),var(--green));transition:width 1s;}
+.pc-bar.hi{background:linear-gradient(90deg,var(--orange),#ffaa00);}
+.pc-meta{display:flex;justify-content:space-between;margin-top:6px;}
+.meta-l{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text2);letter-spacing:1px;}
+.meta-v{font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(168,212,255,0.65);}
+
+/* CHART */
+.chart-panel{background:rgba(8,20,38,0.9);border:1px solid var(--border);border-radius:12px;padding:20px;margin-top:16px;}
+.chart-area{height:120px;display:flex;align-items:flex-end;gap:4px;padding-top:8px;}
+.bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;}
+.bar-fill{width:100%;border-radius:3px 3px 0 0;background:linear-gradient(180deg,var(--cyan),rgba(0,200,255,0.3));transition:height 0.8s;min-height:4px;}
+.bar-lbl{font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--text2);}
+
+/* FOOTER */
+.footer{margin-top:16px;padding:10px 16px;background:rgba(8,20,38,0.6);border:1px solid rgba(0,200,255,0.08);border-radius:8px;display:flex;justify-content:space-between;align-items:center;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text2);flex-wrap:wrap;gap:8px;}
+.footer-tick{color:var(--green);animation:blink 0.8s infinite alternate;}
+
+/* MOBILE NAV */
+@media(max-width:800px){
+  .topbar-title{font-size:13px;letter-spacing:2px;}
+  .clock-str{display:none;}
+  .main-wrap{padding:12px;}
+}
+</style>
+</head>
+<body>
+<div class="grid-bg"></div>
+<div class="scanline"></div>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-corner tl"></div><div class="login-corner tr"></div>
+    <div class="login-corner bl"></div><div class="login-corner br"></div>
+    <div class="login-logo">
+      <div class="icon"></div>
+      <h1>POWERGRID</h1>
+      <p>HOME ENERGY MONITOR</p>
+    </div>
+    <label class="login-label">Utente</label>
+    <input class="login-input" type="text" placeholder="admin" id="l-user" autocomplete="off">
+    <label class="login-label">Password</label>
+    <input class="login-input" type="password" placeholder="••••••••" id="l-pass">
+    <button class="login-btn" onclick="doLogin()">ACCEDI AL SISTEMA</button>
+    <div class="login-status"><span class="login-dot"></span>Sistema online — ESP32 connesso</div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard">
+  <div class="topbar">
+    <div class="topbar-logo">
+      <div class="topbar-icon"></div>
+      <div>
+        <div class="topbar-title">POWERGRID</div>
+        <div class="topbar-sub">HOME ENERGY MONITOR v1.0</div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="live-badge"><span class="login-dot"></span>LIVE</div>
+      <div class="clock-str" id="clock">--:--:--</div>
+      <button class="logout-btn" onclick="doLogout()">ESCI</button>
+    </div>
+  </div>
+
+  <div class="main-wrap">
+    <!-- METRICS -->
+    <div class="metrics-row">
+      <div class="metric-card">
+        <div class="m-label">Totale attuale</div>
+        <div class="m-val" id="m-total">847<span class="m-unit">W</span></div>
+        <div class="m-sub" id="m-delta">↑ +12W</div>
+      </div>
+      <div class="metric-card">
+        <div class="m-label">Oggi</div>
+        <div class="m-val">6.2<span class="m-unit">kWh</span></div>
+        <div class="m-sub" style="color:var(--text2)">dalle 00:00</div>
+      </div>
+      <div class="metric-card">
+        <div class="m-label">Costo oggi</div>
+        <div class="m-val">€<span id="m-cost">1.49</span></div>
+        <div class="m-sub" style="color:var(--text2)">~€0.24/kWh</div>
+      </div>
+      <div class="metric-card">
+        <div class="m-label">Prese attive</div>
+        <div class="m-val" id="m-active">4<span class="m-unit">/5</span></div>
+        <div class="m-sub" style="color:var(--text2)">1 standby</div>
+      </div>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="content-grid">
+      <!-- MAP -->
+      <div class="map-panel">
+        <div class="c-tl"></div><div class="c-tr"></div><div class="c-bl"></div><div class="c-br"></div>
+        <div class="panel-title">// PLANIMETRIA CASA — PRESE IN TEMPO REALE</div>
+        <svg id="house-svg" viewBox="0 0 480 340">
+          <!-- walls -->
+          <rect x="8" y="8" width="464" height="324" rx="3" fill="none" stroke="rgba(0,200,255,0.12)" stroke-width="1"/>
+          <!-- soggiorno -->
+          <rect x="8" y="8" width="230" height="190" fill="rgba(0,50,100,0.18)" stroke="rgba(0,200,255,0.18)" stroke-width="0.5"/>
+          <text x="24" y="28" font-family="'Share Tech Mono',monospace" font-size="9" fill="rgba(0,200,255,0.35)" letter-spacing="2">SOGGIORNO</text>
+          <!-- cucina -->
+          <rect x="238" y="8" width="234" height="190" fill="rgba(0,40,80,0.18)" stroke="rgba(0,200,255,0.18)" stroke-width="0.5"/>
+          <text x="254" y="28" font-family="'Share Tech Mono',monospace" font-size="9" fill="rgba(0,200,255,0.35)" letter-spacing="2">CUCINA</text>
+          <!-- camera -->
+          <rect x="8" y="198" width="210" height="134" fill="rgba(0,30,70,0.18)" stroke="rgba(0,200,255,0.18)" stroke-width="0.5"/>
+          <text x="24" y="218" font-family="'Share Tech Mono',monospace" font-size="9" fill="rgba(0,200,255,0.35)" letter-spacing="2">CAMERA</text>
+          <!-- bagno -->
+          <rect x="218" y="198" width="120" height="134" fill="rgba(0,20,60,0.18)" stroke="rgba(0,200,255,0.18)" stroke-width="0.5"/>
+          <text x="228" y="218" font-family="'Share Tech Mono',monospace" font-size="9" fill="rgba(0,200,255,0.35)" letter-spacing="2">BAGNO</text>
+          <!-- studio -->
+          <rect x="338" y="198" width="134" height="134" fill="rgba(0,25,65,0.18)" stroke="rgba(0,200,255,0.18)" stroke-width="0.5"/>
+          <text x="350" y="218" font-family="'Share Tech Mono',monospace" font-size="9" fill="rgba(0,200,255,0.35)" letter-spacing="2">STUDIO</text>
+
+          <!-- dashed connections -->
+          <line x1="120" y1="108" x2="370" y2="108" stroke="rgba(0,200,255,0.07)" stroke-width="0.5" stroke-dasharray="4 4"/>
+          <line x1="100" y1="270" x2="400" y2="270" stroke="rgba(0,200,255,0.07)" stroke-width="0.5" stroke-dasharray="4 4"/>
+          <line x1="120" y1="108" x2="100" y2="270" stroke="rgba(0,200,255,0.07)" stroke-width="0.5" stroke-dasharray="4 4"/>
+
+          <!-- P1 TV soggiorno -->
+          <g class="node" id="n0" onclick="selPlug(0)">
+            <circle cx="120" cy="108" r="18" fill="rgba(0,255,200,0.06)" stroke="#00ffcc" stroke-width="1" class="nring" id="ring0"/>
+            <circle cx="120" cy="108" r="9" fill="rgba(0,255,200,0.18)" stroke="#00ffcc" stroke-width="1.5"/>
+            <text x="120" y="112" font-family="'Share Tech Mono',monospace" font-size="7" fill="#00ffcc" text-anchor="middle">P1</text>
+            <text x="120" y="138" font-family="'Share Tech Mono',monospace" font-size="9" fill="#00ffcc" text-anchor="middle" id="svgw0">240W</text>
+          </g>
+          <!-- P2 Microonde -->
+          <g class="node" id="n1" onclick="selPlug(1)">
+            <circle cx="370" cy="108" r="18" fill="rgba(255,107,53,0.06)" stroke="#ff6b35" stroke-width="1" class="nring" id="ring1"/>
+            <circle cx="370" cy="108" r="9" fill="rgba(255,107,53,0.18)" stroke="#ff6b35" stroke-width="1.5"/>
+            <text x="370" y="112" font-family="'Share Tech Mono',monospace" font-size="7" fill="#ff6b35" text-anchor="middle">P2</text>
+            <text x="370" y="138" font-family="'Share Tech Mono',monospace" font-size="9" fill="#ff6b35" text-anchor="middle" id="svgw1">380W</text>
+          </g>
+          <!-- P3 PC Camera -->
+          <g class="node" id="n2" onclick="selPlug(2)">
+            <circle cx="100" cy="270" r="18" fill="rgba(0,200,255,0.06)" stroke="#00c8ff" stroke-width="1" class="nring" id="ring2"/>
+            <circle cx="100" cy="270" r="9" fill="rgba(0,200,255,0.18)" stroke="#00c8ff" stroke-width="1.5"/>
+            <text x="100" y="274" font-family="'Share Tech Mono',monospace" font-size="7" fill="#00c8ff" text-anchor="middle">P3</text>
+            <text x="100" y="300" font-family="'Share Tech Mono',monospace" font-size="9" fill="#00c8ff" text-anchor="middle" id="svgw2">165W</text>
+          </g>
+          <!-- P4 Studio -->
+          <g class="node" id="n3" onclick="selPlug(3)">
+            <circle cx="400" cy="270" r="18" fill="rgba(0,200,255,0.06)" stroke="#00c8ff" stroke-width="1" class="nring" id="ring3"/>
+            <circle cx="400" cy="270" r="9" fill="rgba(0,200,255,0.18)" stroke="#00c8ff" stroke-width="1.5"/>
+            <text x="400" y="274" font-family="'Share Tech Mono',monospace" font-size="7" fill="#00c8ff" text-anchor="middle">P4</text>
+            <text x="400" y="300" font-family="'Share Tech Mono',monospace" font-size="9" fill="#00c8ff" text-anchor="middle" id="svgw3">62W</text>
+          </g>
+          <!-- P5 Bagno standby -->
+          <g class="node" id="n4" onclick="selPlug(4)">
+            <circle cx="278" cy="270" r="18" fill="rgba(0,50,80,0.06)" stroke="rgba(0,200,255,0.25)" stroke-width="0.8" stroke-dasharray="4 2" class="nring" id="ring4"/>
+            <circle cx="278" cy="270" r="9" fill="rgba(0,50,80,0.1)" stroke="rgba(0,200,255,0.25)" stroke-width="1"/>
+            <text x="278" y="274" font-family="'Share Tech Mono',monospace" font-size="7" fill="rgba(0,200,255,0.35)" text-anchor="middle">P5</text>
+            <text x="278" y="300" font-family="'Share Tech Mono',monospace" font-size="9" fill="rgba(0,200,255,0.3)" text-anchor="middle" id="svgw4">0W</text>
+          </g>
+
+          <!-- legend -->
+          <circle cx="14" cy="332" r="4" fill="#00ffcc"/>
+          <text x="24" y="336" font-family="'Share Tech Mono',monospace" font-size="8" fill="rgba(168,212,255,0.4)">ATTIVA</text>
+          <circle cx="78" cy="332" r="4" fill="#ff6b35"/>
+          <text x="88" y="336" font-family="'Share Tech Mono',monospace" font-size="8" fill="rgba(168,212,255,0.4)">ALTO CONSUMO</text>
+          <circle cx="172" cy="332" r="4" fill="none" stroke="rgba(0,200,255,0.3)" stroke-width="1" stroke-dasharray="2 1"/>
+          <text x="182" y="336" font-family="'Share Tech Mono',monospace" font-size="8" fill="rgba(168,212,255,0.4)">STANDBY</text>
+        </svg>
+      </div>
+
+      <!-- SIDEBAR CARDS -->
+      <div class="sidebar" id="sidebar"></div>
+    </div>
+
+    <!-- CONSUMPTION CHART -->
+    <div class="chart-panel">
+      <div class="panel-title">// ANDAMENTO ULTIMI 12H — CONSUMI (W)</div>
+      <div class="chart-area" id="chart-area"></div>
+    </div>
+
+    <div class="footer">
+      <span>SHELLY PM MINI GEN3 × 5 — ESP32 HOST</span>
+      <span class="footer-tick">↻ REFRESH 5s</span>
+      <span>IP: 192.168.1.100 — WiFi OK</span>
+    </div>
+  </div>
+</div>
+
+<script>
+const plugs=[
+  {name:"TV Soggiorno",room:"Soggiorno",w:240,maxW:400,v:230.1,a:1.04,on:true,col:"#00ffcc",kwh:1.2},
+  {name:"Microonde",room:"Cucina",w:380,maxW:1800,v:231.0,a:1.65,on:true,col:"#ff6b35",kwh:0.9},
+  {name:"PC Desktop",room:"Camera",w:165,maxW:400,v:229.5,a:0.72,on:true,col:"#00c8ff",kwh:2.1},
+  {name:"Monitor Studio",room:"Studio",w:62,maxW:150,v:230.0,a:0.27,on:true,col:"#00c8ff",kwh:0.6},
+  {name:"Asciugacapelli",room:"Bagno",w:0,maxW:1800,v:0,a:0,on:false,col:"rgba(0,200,255,0.3)",kwh:0},
+];
+let sel=0;
+
+function doLogin(){
+  const u=document.getElementById('l-user').value;
+  const p=document.getElementById('l-pass').value;
+  if((u==='admin'||u==='') && (p==='1234'||p==='')){
+    document.getElementById('login-screen').style.display='none';
+    document.getElementById('dashboard').style.display='block';
+    startDash();
+  } else {
+    document.getElementById('l-pass').style.borderColor='#ff6b35';
+    setTimeout(()=>document.getElementById('l-pass').style.borderColor='',1500);
+  }
+}
+document.addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+
+function doLogout(){
+  document.getElementById('dashboard').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+}
+
+function renderSidebar(){
+  document.getElementById('sidebar').innerHTML=plugs.map((p,i)=>{
+    const pct=Math.round((p.w/p.maxW)*100);
+    const hi=p.w>300;
+    return`<div class="plug-card${i===sel?' sel':''}" onclick="selPlug(${i})">
+      <div class="pc-header">
+        <div><div class="pc-name">${p.name}</div><div class="pc-room">${p.room.toUpperCase()}</div></div>
+        <div class="toggle${p.on?' on':''}" onclick="event.stopPropagation();tog(${i})"></div>
+      </div>
+      <div class="pc-watts${hi?' hi':''}">${p.w}<span style="font-size:11px;opacity:0.4"> W</span></div>
+      <div class="pc-bar-wrap"><div class="pc-bar${hi?' hi':''}" style="width:${pct}%"></div></div>
+      <div class="pc-meta">
+        <span class="meta-l">VOLT</span><span class="meta-v">${p.on?p.v+'V':'—'}</span>
+        <span class="meta-l">AMP</span><span class="meta-v">${p.on?p.a.toFixed(2)+'A':'—'}</span>
+        <span class="meta-l">kWh</span><span class="meta-v">${p.kwh.toFixed(1)}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function selPlug(i){sel=i;renderSidebar();}
+
+function tog(i){
+  plugs[i].on=!plugs[i].on;
+  if(!plugs[i].on){plugs[i].w=0;plugs[i].a=0;plugs[i].v=0;}
+  else{const base=[240,380,165,62,1200][i];plugs[i].w=base;plugs[i].a=parseFloat((base/230).toFixed(2));plugs[i].v=230.0;}
+  updateMetrics();renderSidebar();
+}
+
+function updateMetrics(){
+  const tot=plugs.reduce((a,p)=>a+p.w,0);
+  document.getElementById('m-total').innerHTML=tot+'<span class="m-unit">W</span>';
+  document.getElementById('m-active').innerHTML=plugs.filter(p=>p.on).length+'<span class="m-unit">/5</span>';
+  document.getElementById('m-cost').textContent=((tot/1000)*0.24*6.2).toFixed(2);
+}
+
+function tick(){
+  plugs.forEach((p,i)=>{
+    if(!p.on)return;
+    p.w=Math.max(5,Math.round(p.w+(Math.random()-0.5)*10));
+    p.a=parseFloat((p.w/230).toFixed(2));
+    const el=document.getElementById('svgw'+i);
+    if(el)el.textContent=p.w+'W';
+  });
+  updateMetrics();
+  renderSidebar();
+  const d=(Math.random()>0.5?'↑ +':'↓ -')+Math.round(Math.random()*20)+'W';
+  document.getElementById('m-delta').textContent=d;
+}
+
+function renderChart(){
+  const hours=['00','02','04','06','08','10','12','14','16','18','20','22'];
+  const vals=[180,140,210,320,580,720,650,840,780,900,847,800];
+  const max=Math.max(...vals);
+  document.getElementById('chart-area').innerHTML=hours.map((h,i)=>{
+    const pct=Math.round((vals[i]/max)*100);
+    const hi=vals[i]>700;
+    return`<div class="bar-col">
+      <div class="bar-fill${hi?' hi':''}" style="height:${pct}%;background:${hi?'linear-gradient(180deg,#ff6b35,rgba(255,107,53,0.2))':'linear-gradient(180deg,var(--cyan),rgba(0,200,255,0.2))'}"></div>
+      <div class="bar-lbl">${h}h</div>
+    </div>`;
+  }).join('');
+}
+
+function updateClock(){
+  const now=new Date();
+  document.getElementById('clock').textContent=now.toLocaleTimeString('it-IT');
+}
+
+function startDash(){
+  renderSidebar();
+  renderChart();
+  updateMetrics();
+  updateClock();
+  setInterval(tick,5000);
+  setInterval(updateClock,1000);
+}
+</script>
+</body>
+</html>
